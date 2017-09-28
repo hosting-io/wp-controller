@@ -1,9 +1,4 @@
 <?php
-require_once WPMC_INCLUDES_PATH . '/class-wpmc-transients.php';
-require_once WPMC_INCLUDES_PATH . '/class-wpmc-rsa-handler.php';
-
-/* ------------------------------------------------- */
-
 function wpmc_upgrades_info($type) {
 
 	$valid_types = array('update_core', 'update_themes', 'update_plugins');
@@ -124,12 +119,6 @@ function wpmc_plugins_upgrades(){
 	return $plugins_upgrades;
 }
 
-/* ------------------------------------------------- */
-
-require_once( 'class-wpmc-client-access-handler.php' );
-
-/* ------------------------------------------------- */
-
 function wpmc_delete_all_options(){
     global $wpdb;
     $wpdb->query( $wpdb->prepare( 'DELETE FROM ' . $wpdb->options . ' WHERE option_name LIKE %s', '%wpmc_%' ) );
@@ -139,4 +128,63 @@ function wpmc_on_uninstall(){
     wpmc_delete_all_options();    
     delete_option('wp_management_controller_version');
     Wpmc_Transients::clean_all();
+}
+
+function wpmc_handle_income_requests(){
+    
+    if( Wpmc::enabled_rest_api() ){ return; }
+
+    $endpoints_url_prefix = '/wp-json/' . WPMC_SLUG;
+    $endpoints_url = array(
+        'entry' => $endpoints_url_prefix . '/entry',
+        'authorize' => $endpoints_url_prefix . '/authorize',
+        'tokens' => $endpoints_url_prefix . '/tokens',
+        'refresh_tokens' => $endpoints_url_prefix . '/refresh_tokens',
+        'access' => $endpoints_url_prefix . '/access',
+    );
+
+    $allowed_methods = array('GET', 'POST');
+    $allowed_actions = array_keys( $endpoints_url );
+
+    $request = array( 'uri' => $_SERVER['REQUEST_URI'],
+        'method' => $_SERVER['REQUEST_METHOD'],
+        'action' => NULL
+    );
+
+    if( ! in_array( $request['method'], $allowed_methods, true ) ){ return; }
+
+    foreach ($endpoints_url as $key => $val) {
+        if( 0 < strpos($request['uri'], $val) ){
+            $request['action'] = $key;
+            break;
+        }
+    }
+
+    if( ! in_array( $request['action'], $allowed_actions, true ) ){ return; }
+
+    if( ! class_exists('Wpmc_Authorize_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-authorize-access-handler.php'; }
+
+    switch( $request['method'] ){
+        case 'GET': $params = $_GET; break;
+        case 'POST': $params = $_POST; break;
+    }
+
+    switch( $request['action'] ){
+        case 'access':
+            $o = new Wpmc_Client_Access_Handler();
+            $o->access_endpoint( $params );
+            exit;
+        case 'entry':
+            $o = new Wpmc_Authorize_Access_Handler();
+            wp_send_json( $o->entry_endpoint( $params ) );
+        case 'authorize':
+            $o = new Wpmc_Authorize_Access_Handler();
+            wp_send_json( $o->authorize_endpoint( $params ) );
+        case 'tokens':
+            $o = new Wpmc_Authorize_Access_Handler();
+            wp_send_json( $o->tokens_endpoint( $params ) );
+        case 'refresh_tokens':
+            $o = new Wpmc_Authorize_Access_Handler();
+            wp_send_json( $o->refresh_tokens_endpoint( $params ) );
+    }
 }

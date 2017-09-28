@@ -13,6 +13,9 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 	 * @private
 	 */
 	public function __construct() {
+
+		if( ! class_exists('Wpmc_Authorize_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-authorize-access-handler.php'; }
+		
 		$this->rest_base = WPMC_SLUG;
 	}
 
@@ -79,41 +82,33 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 	}
 
 	public function entry($request){
-		if( ! class_exists('Wpmc_Authorize_Access_Handler') ){
-			require 'class-wpmc-authorize-access-handler.php';
-		}
 		$o = new Wpmc_Authorize_Access_Handler();
 		return $o->entry_endpoint( $request->get_params() );
 	}
 
 	public function authorize($request){
-		if( ! class_exists('Wpmc_Authorize_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-authorize-access-handler.php'; }
 		$o = new Wpmc_Authorize_Access_Handler();
 		return $o->authorize_endpoint( $request->get_params() );
 	}
 
 	public function tokens($request){
-		if( ! class_exists('Wpmc_Authorize_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-authorize-access-handler.php'; }
 		$o = new Wpmc_Authorize_Access_Handler();
 		return $o->tokens_endpoint( $request->get_params() );
 	}
 
 	public function refresh_tokens($request){
-		if( ! class_exists('Wpmc_Authorize_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-authorize-access-handler.php'; }
 		$o = new Wpmc_Authorize_Access_Handler();
 		return $o->refresh_tokens_endpoint( $request->get_params() );
 	}
 
-	public function access($request){
-		if( ! class_exists('Wpmc_Client_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-client-access-handler.php'; }
-		$o = new Wpmc_Client_Access_Handler();
-		$o->available_access_endpoint( $request->get_params() );
-		exit;
-	}
-
 	public function upgrades($request){
-		if( ! class_exists('Wpmc_Client_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-client-access-handler.php'; }
 		$o = new Wpmc_Client_Access_Handler();
 		return $o->available_upgrades_endpoint( $request->get_params() );
+	}
+
+	public function access($request){
+		$o = new Wpmc_Client_Access_Handler();
+		$o->access_endpoint( $request->get_params() );
+		exit;
 	}
 }

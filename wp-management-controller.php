@@ -23,8 +23,18 @@ if ( ! defined( 'WPINC' ) ) {
 }
 
 require_once 'inc/definitions.php';
-
+require_once WPMC_INCLUDES_PATH . '/class-wpmc-transients.php';
+require_once WPMC_INCLUDES_PATH . '/class-wpmc-rsa-handler.php';
+require_once WPMC_INCLUDES_PATH . '/class-wpmc-client-access-handler.php';
 require_once WPMC_INCLUDES_PATH . '/functions.php';
+
+/**
+ * The core plugin class that is used to define internationalization,
+ * admin-specific hooks, and public-facing site hooks.
+ */
+require WPMC_INCLUDES_PATH . '/class-wpmc.php';
+
+wpmc_handle_income_requests();
 
 /**
  * The code that runs during plugin activation.
@@ -44,17 +54,6 @@ function deactivate_wp_management_controller() {
 
 register_activation_hook( __FILE__, 'activate_wp_management_controller' );
 register_deactivation_hook( __FILE__, 'deactivate_wp_management_controller' );
-
-/**
- * The core plugin class that is used to define internationalization,
- * admin-specific hooks, and public-facing site hooks.
- */
-require WPMC_INCLUDES_PATH . '/class-wpmc.php';
-
-/**
- * Handle income requests.
- */
-require_once WPMC_INCLUDES_PATH . '/handle-income-requests.php';
 
 /**
  * Begins execution of the plugin.

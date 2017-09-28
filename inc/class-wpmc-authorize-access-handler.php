@@ -1,9 +1,7 @@
 <?php
-if( ! class_exists('Wpmc_Client_Access_Handler') ){ require 'class-wpmc-client-access-handler.php'; }
-
 class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 
-	function entry_endpoint($args){
+	public function entry_endpoint($args){
 
 		$package = $this->unpackage_request($args);
 
@@ -34,7 +32,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 		return $this->prepare_response( $response_args );
 	}
 
-	function authorize_endpoint($args){
+	public function authorize_endpoint($args){
 
 		$package = $this->unpackage_request($args);
 
@@ -80,7 +78,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 		return $this->prepare_response( $response_args );
 	}
 
-	function tokens_endpoint($args){
+	public function tokens_endpoint($args){
 
 		$package = $this->unpackage_request($args);
 
@@ -153,7 +151,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 				$user = get_user_by( 'ID', $user_id_by_client_id );
 
 				if( ! $user ){ 
-					$response_args = array( 'error' => 13 );
+					$response_args = array( 'error' => 'invalid-client' );
 				}
 				else{
 					$tokens = $this->create_tokens($user);
