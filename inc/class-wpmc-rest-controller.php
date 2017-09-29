@@ -71,11 +71,11 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 			'schema' => array( $this, 'get_public_item_schema' ),
 		));
 
-		register_rest_route( $this->rest_base, 'upgrades', array(
+		register_rest_route( $this->rest_base, 'updates', array(
 			array(
-				'methods'   => WP_REST_Server::READABLE,
-				'callback'  => array( $this, 'upgrades' ),
-				'args'      => $this->get_endpoint_args_for_item_schema( WP_REST_Server::READABLE ),
+				'methods'   => WP_REST_Server::EDITABLE,
+				'callback'  => array( $this, 'updates' ),
+				'args'      => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
 			),
 			'schema' => array( $this, 'get_public_item_schema' ),
 		));
@@ -101,9 +101,9 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 		return $o->refresh_tokens_endpoint( $request->get_params() );
 	}
 
-	public function upgrades($request){
+	public function updates($request){
 		$o = new Wpmc_Client_Access_Handler();
-		return $o->available_upgrades_endpoint( $request->get_params() );
+		return $o->available_updates_endpoint( $request->get_params() );
 	}
 
 	public function access($request){

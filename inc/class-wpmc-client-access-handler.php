@@ -183,6 +183,22 @@ class Wpmc_Client_Access_Handler {
 		exit;
 	}
 
+	protected function invalid_access_response($url, $error, $site_id, $request_url, $request_action){
+		
+		return $this->prepare_response( array( 'site_id' => $site_id, 'request_url' => $request_url, 'request_action' => $request_action, 'error' => $error ) );
+
+		/*$redirect_args = $this->prepare_response( array( 'site_id' => $site_id, 'request_url' => $request_url, 'request_action' => $request_action, 'error' => $error ) );
+		$redirect_args_len = count($redirect_args);
+		$url .= ( parse_url( $url, PHP_URL_QUERY ) ? '&' : '?' );
+		$cntr = 0;
+        foreach ($redirect_args as $k => $v) {
+        	$cntr++;
+        	$url .= $k . '=' . $v . ( $cntr < $redirect_args_len ? '&' : '' ); 
+        }
+		wp_redirect($url);
+		exit;*/
+	}
+
 	public function access_endpoint( $args ){
 
 		$valid_actions = array('login');
@@ -251,50 +267,108 @@ class Wpmc_Client_Access_Handler {
 		}
 	}
 
-	public function available_upgrades_endpoint( $args ){
+	public function available_updates_endpoint( $args ){
 
-		$upgrades_type = isset( $args['type'] ) ? trim($args['type']) : '';
+		$package = $this->unpackage_request($args);
+
+		$valid_actions = array('updates', 'updates-2');
+
+		$action = isset( $package['action'] ) && $package['action'] ? $package['action'] : null;
+		$updates_type = isset( $package['type'] ) && $package['type'] ? $package['type'] : null;
+		$only_count = isset( $package['count'] ) && $package['count'] ? $package['count'] : null;
+		$site_id = isset( $package['site_id'] ) && $package['site_id'] ? $package['site_id'] : null;
+		$request_url = isset( $package['request_url'] ) && $package['request_url'] ? $package['request_url'] : null;
+		$access_token = isset( $package['access_token'] ) && $package['access_token'] ? $package['access_token'] : null;
+		$username = isset( $package['username'] ) && $package['username'] ? $package['username'] : null;
+		$invalid_redirect = isset( $package['invalid_redirect'] ) && $package['invalid_redirect'] ? $package['invalid_redirect'] : null;
+
+		if( null === $action || null === $updates_type || null === $only_count || nulll === $site_id || nul === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
+
+			if( null !== $invalid_redirect ){
+				$error = 'invalid-request';
+				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
+			}
+			else{
+				// Redirect in home page.
+				wp_safe_redirect(site_url());
+			}
+
+		}
 
 		$valid_types = array('all', 'core', 'themes', 'plugins');
 		
-		if( ! in_array( $upgrades_type, $valid_types, true ) ){
-			return $this->set_invalid_request_error();
+		if( ! in_array( $updates_type, $valid_types, true ) ){
+			return $this->prepare_response( $this->set_invalid_request_error() );
 		}
 
-		// Return only number of available upgrades.
-		$only_count = isset( $args['count'] ) ? true : false;
+		// Return only number of available updates.
+		$only_count = 'false' === $only_count ? false : true;
 
-		if( 'all' === $upgrades_type ){
+		if ( ! function_exists('get_user_by') ) { require_once (ABSPATH . WPINC . '/pluggable.php'); }
+
+		$user = get_user_by( 'login', $username );
+
+		// Invalid username.
+		if( ! $user ){
+
+			if( null !== $invalid_redirect ){
+				$error = 'invalid-user';
+				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
+			}
+			else{
+				// Redirect in home page.
+				wp_safe_redirect(site_url());
+			}
+		}
+
+		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
+		
+		// Invalid access token.
+		if( $user_id_by_access_token !== $user->ID ){
+			if( null !== $invalid_redirect ){
+				$error = 'invalid-access';
+				// return array( $invalid_redirect, $error, $site_id, $request_url, $action );
+				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
+			}
+			else{
+				// Redirect in login page.
+				wp_safe_redirect(wp_login_url());
+			}
+		}
+
+		if( 'all' === $updates_type ){
 
 			if( $only_count ){
 				$ret = array(
 					'core' => wpmc_core_upgrade() ? 1 : 0,
-					'themes' => count( wpmc_themes_upgrades() ),
-					'plugins' => count( wpmc_plugins_upgrades() ),
+					'themes' => count( wpmc_themes_updates() ),
+					'plugins' => count( wpmc_plugins_updates() ),
 				);
 			}
 			else{
 				$ret = array(
 					'core' => wpmc_core_upgrade(),
-					'themes' => wpmc_themes_upgrades(),
-					'plugins' => wpmc_plugins_upgrades(),
+					'themes' => wpmc_themes_updates(),
+					'plugins' => wpmc_plugins_updates(),
 				);
 			}
 		}
 		else{
-			switch( $upgrades_type ){
+			switch( $updates_type ){
 				case 'core':
 					$ret = $only_count ? ( wpmc_core_upgrade() ? 1 : 0 ) : wpmc_core_upgrade();
 					break;
 				case 'themes':
-					$ret = $only_count ? count( wpmc_themes_upgrades() ) : wpmc_themes_upgrades();
+					$ret = $only_count ? count( wpmc_themes_updates() ) : wpmc_themes_updates();
 					break;
 				case 'plugins':
-					$ret = $only_count ? count( wpmc_plugins_upgrades() ) : wpmc_plugins_upgrades();
+					$ret = $only_count ? count( wpmc_plugins_updates() ) : wpmc_plugins_updates();
 					break;
 			}
 		}
 
-		return $ret;
+		$ret['manage_options'] = user_can( $user, 'manage_options') ? 1 : 0;
+
+		return $this->prepare_response( $ret );
 	}
 }

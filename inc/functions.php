@@ -1,5 +1,5 @@
 <?php
-function wpmc_upgrades_info($type) {
+function wpmc_updates_info($type) {
 
 	$valid_types = array('update_core', 'update_themes', 'update_plugins');
 
@@ -14,7 +14,7 @@ function wpmc_core_upgrade(){
 
 	global $wp_version;
 
-	$core = wpmc_upgrades_info('update_core');
+	$core = wpmc_updates_info('update_core');
 
     if( isset( $core->updates ) && ! empty( $core->updates ) ) {
 
@@ -36,11 +36,11 @@ function wpmc_core_upgrade(){
     return array();
 }
 
-function wpmc_themes_upgrades(){
+function wpmc_themes_updates(){
 
-	$themes_upgrades = array();
+	$themes_updates = array();
         
-    $themes_info = wpmc_upgrades_info('update_themes');
+    $themes_info = wpmc_updates_info('update_themes');
 
     if ( isset( $themes_info->response ) && ! empty( $themes_info->response ) ) {
 
@@ -65,19 +65,19 @@ function wpmc_themes_upgrades(){
                     $themes_info->response[$theme_slug]['name'] = $theme_data->Name;
                     $themes_info->response[$theme_slug]['current_version'] = $theme_data->Version;
 
-                    $themes_upgrades[] = $themes_info->response[$theme_slug];
+                    $themes_updates[] = $themes_info->response[$theme_slug];
                 }
             }
         }
     }
 
-    return $themes_upgrades;
+    return $themes_updates;
 }
 
-function wpmc_plugins_upgrades(){
+function wpmc_plugins_updates(){
 	
-	$plugins_upgrades = array();
-	$plugins_info = wpmc_upgrades_info('update_plugins');
+	$plugins_updates = array();
+	$plugins_info = wpmc_updates_info('update_plugins');
 
     if ( ! empty( $plugins_info->response )) {
         
@@ -110,13 +110,13 @@ function wpmc_plugins_upgrades(){
                 // Exclude data from return value.
                 unset( $plugins_info->response[$plugin_path]->upgrade_notice );
                 
-                $plugins_upgrades[] = (array) $plugins_info->response[$plugin_path];
+                $plugins_updates[] = (array) $plugins_info->response[$plugin_path];
             }
             
         }
     }
 	
-	return $plugins_upgrades;
+	return $plugins_updates;
 }
 
 function wpmc_delete_all_options(){
@@ -132,7 +132,7 @@ function wpmc_on_uninstall(){
 
 function wpmc_handle_income_requests(){
     
-    if( Wpmc::enabled_rest_api() ){ return; }
+    // if( Wpmc::enabled_rest_api() ){ return; }
 
     $endpoints_url_prefix = '/wp-json/' . WPMC_SLUG;
     $endpoints_url = array(
@@ -141,6 +141,7 @@ function wpmc_handle_income_requests(){
         'tokens' => $endpoints_url_prefix . '/tokens',
         'refresh_tokens' => $endpoints_url_prefix . '/refresh_tokens',
         'access' => $endpoints_url_prefix . '/access',
+        'updates' => $endpoints_url_prefix . '/updates',
     );
 
     $allowed_methods = array('GET', 'POST');
@@ -170,10 +171,6 @@ function wpmc_handle_income_requests(){
     }
 
     switch( $request['action'] ){
-        case 'access':
-            $o = new Wpmc_Client_Access_Handler();
-            $o->access_endpoint( $params );
-            exit;
         case 'entry':
             $o = new Wpmc_Authorize_Access_Handler();
             wp_send_json( $o->entry_endpoint( $params ) );
@@ -186,5 +183,14 @@ function wpmc_handle_income_requests(){
         case 'refresh_tokens':
             $o = new Wpmc_Authorize_Access_Handler();
             wp_send_json( $o->refresh_tokens_endpoint( $params ) );
+            break;
+        case 'access':
+            $o = new Wpmc_Client_Access_Handler();
+            $o->access_endpoint( $params );
+            exit;
+        case 'updates':
+            $o = new Wpmc_Client_Access_Handler();
+            wp_send_json( $o->available_updates_endpoint( $params ) );
+            break;
     }
 }
