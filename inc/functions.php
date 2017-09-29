@@ -132,7 +132,7 @@ function wpmc_on_uninstall(){
 
 function wpmc_handle_income_requests(){
     
-    // if( Wpmc::enabled_rest_api() ){ return; }
+    if( Wpmc::enabled_rest_api() ){ return; }
 
     $endpoints_url_prefix = '/wp-json/' . WPMC_SLUG;
     $endpoints_url = array(

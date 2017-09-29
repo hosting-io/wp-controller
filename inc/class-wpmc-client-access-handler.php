@@ -184,19 +184,7 @@ class Wpmc_Client_Access_Handler {
 	}
 
 	protected function invalid_access_response($url, $error, $site_id, $request_url, $request_action){
-		
 		return $this->prepare_response( array( 'site_id' => $site_id, 'request_url' => $request_url, 'request_action' => $request_action, 'error' => $error ) );
-
-		/*$redirect_args = $this->prepare_response( array( 'site_id' => $site_id, 'request_url' => $request_url, 'request_action' => $request_action, 'error' => $error ) );
-		$redirect_args_len = count($redirect_args);
-		$url .= ( parse_url( $url, PHP_URL_QUERY ) ? '&' : '?' );
-		$cntr = 0;
-        foreach ($redirect_args as $k => $v) {
-        	$cntr++;
-        	$url .= $k . '=' . $v . ( $cntr < $redirect_args_len ? '&' : '' ); 
-        }
-		wp_redirect($url);
-		exit;*/
 	}
 
 	public function access_endpoint( $args ){
