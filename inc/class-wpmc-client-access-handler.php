@@ -203,7 +203,7 @@ class Wpmc_Client_Access_Handler {
 		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
 
 		// Invalid request data.
-		if( null === $action || null === $site_id || nul === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
+		if( null === $action || null === $site_id || null === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
 			
 			if( null !== $invalid_redirect ){
 				$error = 'invalid-request';
@@ -270,7 +270,7 @@ class Wpmc_Client_Access_Handler {
 		$username = isset( $package['username'] ) && $package['username'] ? $package['username'] : null;
 		$invalid_redirect = isset( $package['invalid_redirect'] ) && $package['invalid_redirect'] ? $package['invalid_redirect'] : null;
 
-		if( null === $action || null === $updates_type || null === $only_count || nulll === $site_id || nul === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
+		if( null === $action || null === $updates_type || null === $only_count || nulll === $site_id || null === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
 
 			if( null !== $invalid_redirect ){
 				$error = 'invalid-request';
@@ -358,5 +358,71 @@ class Wpmc_Client_Access_Handler {
 		$ret['manage_options'] = user_can( $user, 'manage_options') ? 1 : 0;
 
 		return $this->prepare_response( $ret );
+	}
+
+	public function available_update_now_endpoint( $args ){
+
+		$package = $this->unpackage_request($args);
+
+		$valid_actions = array('update_now');
+
+		$action = isset( $package['action'] ) && $package['action'] ? $package['action'] : null;
+		$updates_data = isset( $package['data'] ) && $package['data'] ? $package['data'] : null;
+		$site_id = isset( $package['site_id'] ) && $package['site_id'] ? $package['site_id'] : null;
+		$access_token = isset( $package['access_token'] ) && $package['access_token'] ? $package['access_token'] : null;
+		$username = isset( $package['username'] ) && $package['username'] ? $package['username'] : null;
+		$request_url = isset( $package['request_url'] ) && $package['request_url'] ? $package['request_url'] : null;
+		$invalid_redirect = isset( $package['invalid_redirect'] ) && $package['invalid_redirect'] ? $package['invalid_redirect'] : null;
+
+		if( null === $action || null === $updates_data || nulll === $site_id || null === $access_token ||  null === $username || null === $request_url || ! in_array( $action, $valid_actions, true ) ){
+			$error = 'invalid-request';
+
+			// TODO: Just for testing.
+			/*return $this->prepare_response(array( 
+				'action' => $action,
+				'updates_data' => $updates_data,
+				'site_id' => $site_id,
+				'access_token' => $access_token,
+				'username' => $username,
+				'request_url' => $request_url,
+				'invalid_redirect' => $invalid_redirect
+			));*/
+
+			return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
+		}
+
+		if ( ! function_exists('get_user_by') ) { require_once (ABSPATH . WPINC . '/pluggable.php'); }
+
+		$user = get_user_by( 'login', $username );
+
+		// Invalid username.
+		if( ! $user ){
+			$error = 'invalid-user';
+			return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
+		}
+
+		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
+		
+		// Invalid access token.
+		if( $user_id_by_access_token !== $user->ID ){
+			$error = 'invalid-access';
+			return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
+		}
+
+		$return = array();
+
+		if( isset( $updates_data['plugins'] ) ){
+			$return['plugins'] = wpmc_update_plugins( $updates_data['plugins'] );
+		}
+
+		if( isset( $updates_data['themes'] ) ){
+			$return['themes'] = wpmc_update_themes( $updates_data['themes'] );
+		}
+
+		if( isset( $updates_data['core'] ) ){
+			$return['core'] = wpmc_update_core();
+		}
+
+		return $this->prepare_response( $return );
 	}
 }

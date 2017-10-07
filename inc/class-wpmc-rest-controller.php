@@ -79,6 +79,15 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 			),
 			'schema' => array( $this, 'get_public_item_schema' ),
 		));
+
+		register_rest_route( $this->rest_base, 'update_now', array(
+			array(
+				'methods'   => WP_REST_Server::EDITABLE,
+				'callback'  => array( $this, 'update_now' ),
+				'args'      => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+			),
+			'schema' => array( $this, 'get_public_item_schema' ),
+		));
 	}
 
 	public function entry($request){
@@ -104,6 +113,11 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 	public function updates($request){
 		$o = new Wpmc_Client_Access_Handler();
 		return $o->available_updates_endpoint( $request->get_params() );
+	}
+
+	public function update_now($request){
+		$o = new Wpmc_Client_Access_Handler();
+		return $o->available_update_now_endpoint( $request->get_params() );
 	}
 
 	public function access($request){
