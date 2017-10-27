@@ -1,5 +1,5 @@
 === WP Controller ===
-Contributors: pigeonhut
+Contributors: hosting.io, Jody Nesbitt
 Tags: wpcontroller,management,controller,
 Requires at least: 4.5
 Tested up to: 4.8.2
