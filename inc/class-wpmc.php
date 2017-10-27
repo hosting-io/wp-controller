@@ -160,6 +160,10 @@ class Wpmc {
 	private function define_admin_hooks() {
 		$plugin_admin = new Wpmc_Admin( $this->get_plugin(), $this->get_version() );
 		$plugin_basename = plugin_basename( plugin_dir_path( __DIR__ ) . $this->plugin_name . '.php' );
+		$this->loader->add_filter( 'pre_set_site_transient_update_core', $plugin_admin, 'pre_update_core' );
+		$this->loader->add_filter( 'pre_set_site_transient_update_themes', $plugin_admin, 'pre_update_themes' );
+		$this->loader->add_filter( 'pre_set_site_transient_update_plugins', $plugin_admin, 'pre_update_plugins' );
+		$this->loader->add_action( 'upgrader_process_complete', $plugin_admin, 'upgrader_process_complete', 10, 2 );
 	}
 
 	/**

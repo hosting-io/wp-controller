@@ -12,62 +12,77 @@ function wpmc_updates_info($type) {
 
 function wpmc_core_upgrade(){
 
-	global $wp_version;
+    $core_info = get_transient( 'wpmc_core_update_info' );
+    $core_info = $core_info && is_array( $core_info ) && ! empty( $core_info ) ? $core_info : array();
+    
+    if( empty( $core_info ) ){
 
-	$core = wpmc_updates_info('update_core');
+    	global $wp_version;
 
-    if( isset( $core->updates ) && ! empty( $core->updates ) ) {
+    	$core = wpmc_updates_info('update_core');
 
-        $core_info = (array) $core->updates[0];
+        if( isset( $core->updates ) && ! empty( $core->updates ) ) {
 
-        if ( "development" === $core_info['response'] || version_compare( $wp_version, $core_info['current'], '<' ) ) {
+            $core_info = (array) $core->updates[0];
 
-        	// Set data in return value.
-            $core_info['current_version'] = $wp_version;
-            
-            // Exclude information from return value.
-            unset( $core_info['php_version'] );
-            unset( $core_info['mysql_version'] );
+            if ( "development" === $core->updates[0]->response || version_compare( $wp_version, $core->updates[0]->current, '<' ) ) {
 
-            return $core_info;
+            	// Set data in return value.
+                $core_info['current_version'] = $wp_version;
+                
+                // Exclude information from return value.
+                unset( $core_info['php_version'] );
+                unset( $core_info['mysql_version'] );
+
+                set_transient( 'wpmc_core_update_info', $core_info, DAY_IN_SECONDS );
+            }
+            else{
+                $core_info = array();
+            }
         }
     }
 
-    return array();
+    return $core_info;
 }
 
 function wpmc_themes_updates(){
 
-	$themes_updates = array();
-        
-    $themes_info = wpmc_updates_info('update_themes');
+    $themes_updates = get_transient( 'wpmc_themes_updates_info' );
+    $themes_updates = $themes_updates && is_array( $themes_updates ) && ! empty( $themes_updates ) ? $themes_updates : array();
+    
+    if( empty( $themes_updates ) ){
 
-    if ( isset( $themes_info->response ) && ! empty( $themes_info->response ) ) {
+        $themes_info = wpmc_updates_info('update_themes');
 
-    	$all_themes = wp_get_themes();
+        if ( isset( $themes_info->response ) && ! empty( $themes_info->response ) ) {
 
-        foreach ( $all_themes as $theme_template => $theme_data ) {
+        	$all_themes = wp_get_themes();
 
-        	// Exclude child themes.
-            if( isset( $theme_data->{'Parent Theme'} ) && ! empty( $theme_data->{'Parent Theme'} ) ){
-                continue;
-            }
+            foreach ( $all_themes as $theme_template => $theme_data ) {
 
-            foreach ( $themes_info->response as $theme_slug => $thm ) {
+            	// Exclude child themes.
+                if( isset( $theme_data->{'Parent Theme'} ) && ! empty( $theme_data->{'Parent Theme'} ) ){
+                    continue;
+                }
 
-            	if ( $theme_slug !== $theme_data->Template ) {
-            		continue;
-            	}
+                foreach ( $themes_info->response as $theme_slug => $thm ) {
 
-                if ( 0 < strlen( $theme_data->Name ) && 0 < strlen( $theme_data->Version ) ) {
-                    
-                    // Set data in return value.
-                    $themes_info->response[$theme_slug]['name'] = $theme_data->Name;
-                    $themes_info->response[$theme_slug]['current_version'] = $theme_data->Version;
+                	if ( $theme_slug !== $theme_data->Template ) {
+                		continue;
+                	}
 
-                    $themes_updates[] = $themes_info->response[$theme_slug];
+                    if ( 0 < strlen( $theme_data->Name ) && 0 < strlen( $theme_data->Version ) ) {
+                        
+                        // Set data in return value.
+                        $themes_info->response[$theme_slug]['name'] = $theme_data->Name;
+                        $themes_info->response[$theme_slug]['current_version'] = $theme_data->Version;
+
+                        $themes_updates[] = $themes_info->response[$theme_slug];
+                    }
                 }
             }
+
+            set_transient( 'wpmc_themes_updates_info', $themes_updates, DAY_IN_SECONDS );
         }
     }
 
@@ -75,44 +90,51 @@ function wpmc_themes_updates(){
 }
 
 function wpmc_plugins_updates(){
+
+    $plugins_updates = get_transient( 'wpmc_plugins_updates_info' );
+
+    $plugins_updates = $plugins_updates && is_array( $plugins_updates )&& ! empty( $plugins_updates ) ? $plugins_updates : array();
 	
-	$plugins_updates = array();
-	$plugins_info = wpmc_updates_info('update_plugins');
+    if( empty( $plugins_updates ) ){
+    	
+    	$plugins_info = wpmc_updates_info('update_plugins');
 
-    if ( ! empty( $plugins_info->response )) {
-        
-        if ( ! function_exists('get_plugin_data') ){
-            include_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
-        
-        foreach ( $plugins_info->response as $plugin_path => $plugin_version ) {
+        if ( ! empty( $plugins_info->response )) {
             
-        	// Exclude plugin "Campaigns.io - WordPress Multisite Controller".
-            if ( 'wp-management-controller/wp-management-controller.php' === $plugin_path ){
-                continue;
+            if ( ! function_exists('get_plugin_data') ){
+                include_once ABSPATH . 'wp-admin/includes/plugin.php';
             }
-
-            $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/' . $plugin_path );
             
-            if( ! isset( $plugin_data['Name'] ) ){
-                continue;
-            }
-
-            $return_plugin = array();
-
-            if ( strlen( $plugin_data['Name'] ) > 0 && strlen( $plugin_data['Version'] ) > 0 ) {
-
-            	// Set data in return value.
-                $plugins_info->response[$plugin_path]->name = $plugin_data['Name'];
-                $plugins_info->response[$plugin_path]->old_version = $plugin_data['Version'];
-                $plugins_info->response[$plugin_path]->file = $plugin_path;
-
-                // Exclude data from return value.
-                unset( $plugins_info->response[$plugin_path]->upgrade_notice );
+            foreach ( $plugins_info->response as $plugin_path => $plugin_version ) {
                 
-                $plugins_updates[] = (array) $plugins_info->response[$plugin_path];
+            	// Exclude plugin "Campaigns.io - WordPress Multisite Controller".
+                if ( 'wp-management-controller/wp-management-controller.php' === $plugin_path ){
+                    continue;
+                }
+
+                $plugin_data = get_plugin_data( WP_PLUGIN_DIR . '/' . $plugin_path );
+                
+                if( ! isset( $plugin_data['Name'] ) ){
+                    continue;
+                }
+
+                $return_plugin = array();
+
+                if ( strlen( $plugin_data['Name'] ) > 0 && strlen( $plugin_data['Version'] ) > 0 ) {
+
+                	// Set data in return value.
+                    $plugins_info->response[$plugin_path]->name = $plugin_data['Name'];
+                    $plugins_info->response[$plugin_path]->old_version = $plugin_data['Version'];
+                    $plugins_info->response[$plugin_path]->file = $plugin_path;
+
+                    // Exclude data from return value.
+                    unset( $plugins_info->response[$plugin_path]->upgrade_notice );
+                    
+                    $plugins_updates[] = (array) $plugins_info->response[$plugin_path];
+                }
             }
-            
+
+            set_transient( 'wpmc_plugins_updates_info', $plugins_updates, DAY_IN_SECONDS );
         }
     }
 	
@@ -136,6 +158,7 @@ function wpmc_handle_income_requests(){
 
     $endpoints_url_prefix = '/wp-json/' . WPMC_SLUG;
     $endpoints_url = array(
+        'ping' => $endpoints_url_prefix . '/ping',
         'entry' => $endpoints_url_prefix . '/entry',
         'authorize' => $endpoints_url_prefix . '/authorize',
         'tokens' => $endpoints_url_prefix . '/tokens',
@@ -171,6 +194,9 @@ function wpmc_handle_income_requests(){
     }
 
     switch( $request['action'] ){
+        case 'ping':
+            $o = new Wpmc_Client_Access_Handler();
+            wp_send_json( $o->ping_endpoint( $params ) );
         case 'entry':
             $o = new Wpmc_Authorize_Access_Handler();
             wp_send_json( $o->entry_endpoint( $params ) );
@@ -220,9 +246,18 @@ function wpmc_update_themes( $themes_slugs = array() ){
     $update_themes = get_site_transient('update_themes');
 
     if( empty( $update_themes ) || ! is_array( $update_themes->response ) || empty( $update_themes->response ) ){
+        
+        $updraded = array();
+        foreach ($themes_slugs as $key => $val) {
+            $updraded[$val] = 1;
+        }
+
+        delete_transient( 'wpmc_themes_updates_info' );
+        
         return array(
             'error' => 0,
             'message' => 'Seems that all themes are up to date.',
+            'upgraded' => $updraded,
         );
     }
 
@@ -240,9 +275,18 @@ function wpmc_update_themes( $themes_slugs = array() ){
     }
 
     if( empty( $themes ) ){
+
+        $updraded = array();
+        foreach ($themes_slugs as $key => $val) {
+            $updraded[$val] = 1;
+        }
+
+        delete_transient( 'wpmc_themes_updates_info' );
+
         return array(
             'error' => 0,
             'message' => 'Seems that all themes are up to date.',
+            'upgraded' => $updraded,
         );
     }
 
@@ -254,90 +298,64 @@ function wpmc_update_themes( $themes_slugs = array() ){
         include_once ABSPATH . 'wp-admin/includes/file.php';
     }
 
-    if( ! class_exists('Wpmc_Empty_Bulk_Upgrader_Skin') ){
-        include_once( WPMC_INCLUDES_PATH . '/class-wpmc-empty-bulk-upgrader-skin.php' );
-    }
-
     if( ! function_exists('is_plugin_active') ){
         include_once ABSPATH . 'wp-admin/includes/plugin.php';
     }
 
-    $upgrader = new Theme_Upgrader( new Wpmc_Empty_Bulk_Upgrader_Skin( compact('title', 'nonce', 'url', 'theme') ) );
+    if ( ! function_exists('wp_update_themes') ){
+        include_once ABSPATH . 'wp-includes/update.php';
+    }
 
-    // if( count( $themes ) > 1 ){    // Multiple plugins upgrades.
+    if (!class_exists('Automatic_Upgrader_Skin')) {
+        include_once ABSPATH . 'wp-admin/includes/class-automatic-upgrader-skin.php';
+    }
+    
+    // The Automatic_Upgrader_Skin skin shouldn't output anything.
+    $upgrader = new Theme_Upgrader( new Automatic_Upgrader_Skin() );    
+    
+    $upgrader->init();
+    
+    defined('DOING_CRON') or define('DOING_CRON', true);
 
-        $result = $upgrader->bulk_upgrade( array_keys($themes) );
+    $result = $upgrader->bulk_upgrade( array_keys($themes) );
 
-        if( empty($result) ) {
-            return array(
-                'error' => 1,
-                'message' => 'Themes upgrade failed.',
-            );
+    if( empty($result) ) {
+        return array(
+            'error' => 1,
+            'message' => 'Themes upgrade failed.',
+        );
+    }
+
+    $return = array();
+
+    wp_update_themes();
+
+    $update_themes = get_site_transient('update_themes');
+
+    foreach ($result as $theme_tmp => $theme_info) {
+        if ( !$theme_info || is_wp_error($theme_info) ) {
+            $return[$theme_tmp] = 'Theme update returned an error.';
         }
-
-        $return = array();
-
-        if ( ! function_exists('wp_update_themes') ){
-            include_once(ABSPATH . 'wp-includes/update.php');
-        }
-
-        wp_update_themes();
-
-        $update_themes = get_site_transient('update_themes');
-
-        foreach ($result as $theme_tmp => $theme_info) {
-
-            if ( !$theme_info || is_wp_error($theme_info) ) {
-                $return[$theme_tmp] = 'Theme update returned an error.';
+        else {
+            
+            if( ! empty( $result[$theme_tmp] ) || ( isset( $update_themes->checked[$theme_tmp] ) && true === version_compare( array_search($theme_tmp, $versions), $update_themes->checked[$theme_tmp], '<' ) ) ){
+                $return[$theme_tmp] = 1;
             }
             else {
                 
-                if( ! empty( $result[$theme_tmp] ) || ( isset( $update_themes->checked[$theme_tmp] ) && true === version_compare( array_search($theme_tmp, $versions), $update_themes->checked[$theme_tmp], '<' ) ) ){
-                    $return[$theme_tmp] = 1;
-                }
-                else {
-                    
-                    $return[$theme_tmp] = 'An error occured. Please, try again.';
-                }
-
+                $return[$theme_tmp] = 'An error occured. Please, try again.';
             }
 
         }
+    }
 
-        return array(
-            'error' => 0,
-            'message' => 'All themes was upgraded successfully.',
-            'upgraded' => $return,
-        );
+    delete_transient( 'wpmc_themes_updates_info' );
 
-    // }
-    // else{
-
-    //     $theme = array_keys($themes);
-    //     $theme_slug = $theme[0];
-    //     $themeData = wpmc_theme_data($theme_slug);
-
-    //     if( true !== $upgrader->upgrade( $theme_slug ) ) {
-    //         return array(
-    //             'error' => 1,
-    //             'message' => 'Theme "" upgrade failed.',
-    //         );
-    //     }
-
-    //     if ( ! function_exists('wp_update_themes') ){
-    //         include_once(ABSPATH . 'wp-includes/update.php');
-    //     }
-
-    //     wp_update_themes();
-
-    //     return array(
-    //         'error' => 0,
-    //         'message' => 'Theme "' . $themeData['Name'] . '" was upgraded successfully.',
-    //         'upgraded' => array( $theme[0] => 1 ),
-    //     );
-
-    // }
-
+    return array(
+        'error' => 0,
+        'message' => 'All themes was upgraded successfully.',
+        'upgraded' => $return,
+    );
 }
 
 function wpmc_update_plugins( $plugins_slugs = array() ){
@@ -345,9 +363,18 @@ function wpmc_update_plugins( $plugins_slugs = array() ){
     $update_plugins = get_site_transient( 'update_plugins' );
 
     if( empty( $update_plugins ) || ! is_array( $update_plugins->response ) || empty( $update_plugins->response ) ){
+
+        $updraded = array();
+        foreach ($plugins_slugs as $key => $val) {
+            $updraded[$val] = 1;
+        }
+
+        delete_transient( 'wpmc_plugins_updates_info' );
+
         return array(
             'error' => 0,
             'message' => 'Seems that all plugins are up to date.',
+            'upgraded' => $updraded,
         );
     }
 
@@ -371,9 +398,18 @@ function wpmc_update_plugins( $plugins_slugs = array() ){
     }
 
     if( empty( $plugins ) ){
+
+        $updraded = array();
+        foreach ($plugins_slugs as $key => $val) {
+            $updraded[$val] = 1;
+        }
+
+        delete_transient( 'wpmc_plugins_updates_info' );
+
         return array(
             'error' => 0,
             'message' => 'Seems that all plugins are up to date.',
+            'upgraded' => $updraded,
         );
     }
 
@@ -385,96 +421,67 @@ function wpmc_update_plugins( $plugins_slugs = array() ){
         include_once ABSPATH . 'wp-admin/includes/file.php';
     }
 
-    if( ! class_exists('Wpmc_Empty_Bulk_Upgrader_Skin') ){
-        include_once( WPMC_INCLUDES_PATH . '/class-wpmc-empty-bulk-upgrader-skin.php' );
-    }
-
     if( ! function_exists('is_plugin_active') ){
         include_once ABSPATH . 'wp-admin/includes/plugin.php';
     }
 
-    $upgrader = new Plugin_Upgrader( new Wpmc_Empty_Bulk_Upgrader_Skin( compact('title', 'nonce', 'url', 'theme') ) );
+    if (!function_exists('wp_update_plugins')) {
+        include_once ABSPATH . 'wp-includes/update.php';
+    }
 
-    // if( count( $plugins ) > 1 ){    // Multiple plugins upgrades.
+    if (!class_exists('Automatic_Upgrader_Skin')) {
+        include_once ABSPATH . 'wp-admin/includes/class-automatic-upgrader-skin.php';
+    }
 
-        $result = $upgrader->bulk_upgrade( array_keys($plugins) );
+    // The Automatic_Upgrader_Skin skin shouldn't output anything.
+    $upgrader = new Plugin_Upgrader( new Automatic_Upgrader_Skin() );
+    
+    $upgrader->init();
+    
+    // Avoid the plugins to be deactivated.
+    defined('DOING_CRON') or define('DOING_CRON', true);
+    
+    $result = $upgrader->bulk_upgrade( array_keys( $plugins ) );    // NOTE: Get upgrade process message: $upgrader->skin->get_upgrade_messages(),
 
-        if( empty($result) ) {
-            return array(
-                'error' => 1,
-                'message' => 'Plugins upgrade failed.',
-            );
+    wp_update_plugins();
+
+    if( empty( $result ) ) {
+        return array(
+            'result' => $result,
+            'message' => 'Plugins upgrade failed.',
+        );
+    }
+
+    $return = array();
+
+    $update_plugins = get_site_transient('update_plugins');
+
+    foreach ($result as $plugin_slug => $plugin_info) {
+
+        if ( ! $plugin_info || is_wp_error( $plugin_info ) ) {
+            $return[ $plugins[$plugin_slug]->slug ] = $plugin_info;
         }
-
-        $return = array();
-
-        if ( ! function_exists('wp_update_plugins') ){
-            include_once(ABSPATH . 'wp-includes/update.php');
-        }
-
-        wp_update_plugins();
-
-        $update_plugins = get_site_transient('update_plugins');
-
-        foreach ($result as $plugin_slug => $plugin_info) {
-
-            if ( ! $plugin_info || is_wp_error($plugin_info) ) {
-                $return[ $plugins[$plugin_slug]->slug ] = 'Plugin update returned an error.';
+        else {
+            
+            if( ! empty( $result[$plugin_slug] ) || ( isset( $update_plugins->checked[$plugin_slug] ) && true === version_compare( array_search($plugin_slug, $versions), $update_plugins->checked[$plugin_slug], '<' ) ) ){
+                $return[ $plugins[$plugin_slug]->slug ] = 1;
             }
             else {
                 
-                if( ! empty( $result[$plugin_slug] ) || ( isset( $update_plugins->checked[$plugin_slug] ) && true === version_compare( array_search($plugin_slug, $versions), $update_plugins->checked[$plugin_slug], '<' ) ) ){
-                    $return[ $plugins[$plugin_slug]->slug ] = 1;
-                }
-                else {
-                    
-                    $return[ $plugins[$plugin_slug]->slug ] = 'An error occured. Please, try again.';
-                }
-
+                $return[ $plugins[$plugin_slug]->slug ] = 'An error occured. Please, try again.';
             }
 
         }
 
-        return array(
-            'error' => 0,
-            'message' => 'All plugins was upgraded successfully.',
-            'upgraded' => $return,
-        );
-    // }
-    // else{   // Single plugin upgrade
+    }
 
-    //     $pluginPath = array_keys($plugins);
-    //     $pluginPath = $pluginPath[0];
-    //     $pluginData = get_plugin_data( WP_PLUGIN_DIR . '/' . $pluginPath );
+    delete_transient( 'wpmc_plugins_updates_info' );
 
-    //     $wasActivated = is_plugin_active( $pluginPath );
-    //     if( $wasActivated ){
-    //         deactivate_plugins( $pluginPath );
-    //     }
-
-    //     if( true !== $upgrader->upgrade( $pluginPath ) ) {
-    //         return array(
-    //             'error' => 1,
-    //             'message' => 'Plugin "' . $pluginData['Name'] . '" upgrade failed.',
-    //         );
-    //     }
-
-    //     if( $wasActivated ){
-    //         activate_plugin( $pluginPath );
-    //     }
-
-    //     if ( ! function_exists('wp_update_plugins') ){
-    //         include_once(ABSPATH . 'wp-includes/update.php');
-    //     }
-        
-    //     wp_update_plugins();
-
-    //     return array(
-    //         'error' => 0,
-    //         'message' => 'Plugin "' . $pluginData['Name'] . '" was upgraded successfully.',
-    //         'upgraded' => array( $plugins[$plugin_slug]->slug $pluginPath => 1 ),
-    //     );
-    // }
+    return array(
+        'error' => 0,
+        'message' => 'Plugins upgrade process completed.',
+        'upgraded' => $return,
+    );
 }
 
 function wpmc_update_core(){
@@ -497,6 +504,9 @@ function wpmc_update_core(){
     $current_update = $core->updates[0];
 
     if( ! isset( $current_update->response ) || 'latest' === $current_update->response ){
+
+        delete_transient( 'wpmc_core_update_info' );
+
         return array(
             'error' => 0,
             'message' => 'Seems that WordPress core is up to date.',
@@ -525,12 +535,15 @@ function wpmc_update_core(){
         include_once ABSPATH . 'wp-admin/includes/file.php';
     }
 
-    if( ! class_exists('Wpmc_Empty_Bulk_Upgrader_Skin') ){
-        include_once( WPMC_INCLUDES_PATH . '/class-wpmc-empty-bulk-upgrader-skin.php' );
-    }    
+    if (!class_exists('Automatic_Upgrader_Skin')) {
+        include_once ABSPATH . 'wp-admin/includes/class-automatic-upgrader-skin.php';
+    }
 
-    $upgrader = new Core_Upgrader( new Wpmc_Empty_Bulk_Upgrader_Skin() );
-
+    // The Automatic_Upgrader_Skin skin shouldn't output anything.
+    $upgrader = new Core_Upgrader( new Automatic_Upgrader_Skin() );    
+    
+    $upgrader->init();
+    
     $result = $upgrader->upgrade($current_update);
     
     if( is_wp_error($result) ){
@@ -539,6 +552,8 @@ function wpmc_update_core(){
             'message' => 'WordPress core upgrade failed.'
         );
     }
+
+    delete_transient( 'wpmc_core_update_info' );
 
     return array(
         'error' => 0,

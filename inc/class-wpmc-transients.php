@@ -25,6 +25,8 @@ class Wpmc_Transients {
 	 * [[Description]]
 	 */
 	public static function clean_all() {
-
+		delete_transient( 'wpmc_themes_updates_info' );
+		delete_transient( 'wpmc_plugins_updates_info' );
+		delete_transient( 'wpmc_core_update_info' );
 	}
 }

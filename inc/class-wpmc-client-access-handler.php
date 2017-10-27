@@ -120,7 +120,7 @@ class Wpmc_Client_Access_Handler {
 		update_option( 'wpmc_client_id[' . $user->ID . ']', $this->client['id'] );
 		update_option( 'wpmc_client_secret[' . $user->ID . ']', $this->client['secret'] );
 
-		return $this->get_client();
+		return $this->get_client($user);
 	}
 
 	protected function get_tokens(){
@@ -187,6 +187,17 @@ class Wpmc_Client_Access_Handler {
 		return $this->prepare_response( array( 'site_id' => $site_id, 'request_url' => $request_url, 'request_action' => $request_action, 'error' => $error ) );
 	}
 
+	public function ping_endpoint( $args ){
+		$package = $this->unpackage_request($args);
+		$site_id = isset( $package['site_id'] ) && $package['site_id'] ? $package['site_id'] : null;
+		$security_arg = isset( $package['security_arg'] ) && $package['security_arg'] ? $package['security_arg'] : null;
+		$response_args = array( 
+			'site_id' => $site_id,
+			'security_arg' => $security_arg
+		);
+		return $this->prepare_response( $response_args );
+	}
+
 	public function access_endpoint( $args ){
 
 		$valid_actions = array('login');
@@ -206,7 +217,7 @@ class Wpmc_Client_Access_Handler {
 		if( null === $action || null === $site_id || null === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
 			
 			if( null !== $invalid_redirect ){
-				$error = 'invalid-request';
+				$error = ! $access_token ? 'invalid-access' : 'invalid-request';
 				$this->invalid_access_redirect( $invalid_redirect, $error, $site_id, $request_url, $action );
 			}
 			else{
@@ -270,10 +281,10 @@ class Wpmc_Client_Access_Handler {
 		$username = isset( $package['username'] ) && $package['username'] ? $package['username'] : null;
 		$invalid_redirect = isset( $package['invalid_redirect'] ) && $package['invalid_redirect'] ? $package['invalid_redirect'] : null;
 
-		if( null === $action || null === $updates_type || null === $only_count || nulll === $site_id || null === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
+		if( null === $action || null === $updates_type || null === $only_count || null === $site_id || null === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
 
 			if( null !== $invalid_redirect ){
-				$error = 'invalid-request';
+				$error = ! $access_token ? 'invalid-access' : 'invalid-request';
 				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
 			}
 			else{
@@ -357,6 +368,10 @@ class Wpmc_Client_Access_Handler {
 
 		$ret['manage_options'] = user_can( $user, 'manage_options') ? 1 : 0;
 
+		$ret['can_update_plugins'] = user_can( $user, 'update_plugins') ? 1 : 0;
+		$ret['can_update_themes'] = user_can( $user, 'update_themes') ? 1 : 0;
+		$ret['can_update_core'] = user_can( $user, 'update_core') ? 1 : 0;
+
 		return $this->prepare_response( $ret );
 	}
 
@@ -374,8 +389,8 @@ class Wpmc_Client_Access_Handler {
 		$request_url = isset( $package['request_url'] ) && $package['request_url'] ? $package['request_url'] : null;
 		$invalid_redirect = isset( $package['invalid_redirect'] ) && $package['invalid_redirect'] ? $package['invalid_redirect'] : null;
 
-		if( null === $action || null === $updates_data || nulll === $site_id || null === $access_token ||  null === $username || null === $request_url || ! in_array( $action, $valid_actions, true ) ){
-			$error = 'invalid-request';
+		if( null === $action || null === $updates_data || null === $site_id || null === $access_token ||  null === $username || null === $request_url || ! in_array( $action, $valid_actions, true ) ){
+			$error = ! $access_token ? 'invalid-access' : 'invalid-request';
 
 			// TODO: Just for testing.
 			/*return $this->prepare_response(array( 

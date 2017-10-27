@@ -26,6 +26,15 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 	 */
 	public function register_routes() {
 
+		register_rest_route( $this->rest_base, 'ping', array(
+			array(
+				'methods'   => WP_REST_Server::EDITABLE,
+				'callback'  => array( $this, 'ping' ),
+				'args'      => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+			),
+			'schema' => array( $this, 'get_public_item_schema' ),
+		));
+
 		register_rest_route( $this->rest_base, 'entry', array(
 			array(
 				'methods'   => WP_REST_Server::EDITABLE,
@@ -88,6 +97,11 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 			),
 			'schema' => array( $this, 'get_public_item_schema' ),
 		));
+	}
+
+	public function ping($request){
+		$o = new Wpmc_Authorize_Access_Handler();
+		return $o->ping_endpoint( $request->get_params() );
 	}
 
 	public function entry($request){

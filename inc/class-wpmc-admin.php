@@ -67,4 +67,33 @@ class Wpmc_Admin {
 		}
 		return $this->wp_nonce;
 	}
+
+	public function pre_update_core($value){
+		delete_transient( 'wpmc_core_update_info' );
+		return $value;
+	}
+
+	public function pre_update_themes($value){
+		delete_transient( 'wpmc_themes_updates_info' );
+		return $value;
+	}
+
+	public function pre_update_plugins($value){
+		delete_transient( 'wpmc_plugins_updates_info' );
+		return $value;
+	}
+
+	public function upgrader_process_complete( $upgrader_object, $options ){
+		switch( $options['type'] ){
+			case 'core':
+				delete_transient( 'wpmc_core_update_info' );
+				break;
+			case 'theme';
+				delete_transient( 'wpmc_themes_updates_info' );
+				break;
+			case 'plugin';
+				delete_transient( 'wpmc_plugins_updates_info' );
+				break;
+		}
+	}
 }

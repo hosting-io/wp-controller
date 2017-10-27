@@ -8,7 +8,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 		$username = isset( $package['username'] ) ? trim( $package['username'] ) : '';
 
 		if( '' === $username ){
-			$response_args = array( 'error' => 1 );
+			$response_args = array( 'error' => 'missing-username' );
 		}
 		else{
 
@@ -16,7 +16,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 			$user = get_user_by( 'login', $username );
 
 			if( ! $user ){
-				$response_args = array( 'error' => 2 );
+				$response_args = array( 'error' => 'invalid-username' );
 			}
 			else{
 				$client = $this->create_client( $user );
@@ -50,6 +50,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 			else{
 
 				if ( ! function_exists('get_user_by') ) { require_once (ABSPATH . WPINC . '/pluggable.php'); }
+				
 				$user = get_user_by( 'ID', $user_id );
 				
 				if( ! $user ){ 
@@ -107,6 +108,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 				else{
 
 					if ( ! function_exists('get_user_by') ) { require_once (ABSPATH . WPINC . '/pluggable.php'); }
+					
 					$user = get_user_by( 'ID', $user_id_by_client_id );
 
 					if( ! $user ){ 
@@ -134,7 +136,7 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 		$refresh_token = isset( $package['refresh_token'] ) ? trim( $package['refresh_token'] ) : '';
 
 		if( '' === $client_id || '' === $client_secret || '' === $refresh_token ){
-			$response_args = array( 'error' => 11 );
+			$response_args = array( 'error' => 'empty-refresh-credentials' );
 		}
 		else{
 
@@ -142,8 +144,8 @@ class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 			$user_id_by_client_secret = $this->user_id_by_token_or_key( 'client_secret', $client_secret );
 			$user_id_by_refresh_token = $this->user_id_by_token_or_key( 'refresh_token', $refresh_token );
 
-			if( 0 !== $user_id_by_client_id && $user_id_by_client_id !== $user_id_by_client_secret || $user_id_by_client_id !== $user_id_by_refresh_token ){
-				$response_args = array( 'error' => 12 );
+			if( 0 !== $user_id_by_client_id && ( $user_id_by_client_id !== $user_id_by_client_secret || $user_id_by_client_id !== $user_id_by_refresh_token ) ){
+				$response_args = array( 'error' => 'invalid-refresh-credentials' );
 			}
 			else{
 
