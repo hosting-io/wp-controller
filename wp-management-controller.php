@@ -4,13 +4,13 @@
  *
  * @package 	WordPress_Multisite_Controller
  * @author    	hosting.io, campaigns.io
- * @copyright 	2017 
+ * @copyright 	2017
  * @license   	GPL2
  *
  * Plugin Name: 	Campaigns.io - WordPress Multisite Controller
  * Plugin URI:      https://controlwp.io
  * Description:     WordPress Multisite Controller - giving you more than just one click login. Discover everything you need to know about your business, from one easy to use dashboard
- * Version:         3.0.3
+ * Version:         3.0.5
  * Author:          hosting.io, campaigns.io
  * Author URI:      https://campaigns.io
  * Text Domain:     wp-management-controller
