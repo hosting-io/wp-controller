@@ -81,7 +81,7 @@ function wpmc_themes_updates(){
                     }
                 }
             }
-
+            
             set_transient( 'wpmc_themes_updates_info', $themes_updates, DAY_IN_SECONDS );
         }
     }
@@ -163,14 +163,17 @@ function wpmc_handle_income_requests(){
         'authorize' => $endpoints_url_prefix . '/authorize',
         'tokens' => $endpoints_url_prefix . '/tokens',
         'refresh_tokens' => $endpoints_url_prefix . '/refresh_tokens',
+        'login' => $endpoints_url_prefix . '/login',
         'access' => $endpoints_url_prefix . '/access',
         'updates' => $endpoints_url_prefix . '/updates',
+        'update_now' => $endpoints_url_prefix . '/update_now',
     );
 
     $allowed_methods = array('GET', 'POST');
     $allowed_actions = array_keys( $endpoints_url );
 
-    $request = array( 'uri' => $_SERVER['REQUEST_URI'],
+    $request = array(
+        'uri' => $_SERVER['REQUEST_URI'],
         'method' => $_SERVER['REQUEST_METHOD'],
         'action' => NULL
     );
@@ -189,8 +192,16 @@ function wpmc_handle_income_requests(){
     if( ! class_exists('Wpmc_Authorize_Access_Handler') ){ require WPMC_INCLUDES_PATH . '/class-wpmc-authorize-access-handler.php'; }
 
     switch( $request['method'] ){
-        case 'GET': $params = $_GET; break;
-        case 'POST': $params = $_POST; break;
+        case 'GET':
+            $params = $_GET;
+            if( 'access' !== $request['action'] ){  // @note: Only 'access' endpoint uses $_GET request.
+                wp_redirect( home_url() );
+                exit;
+            }
+            break;
+        case 'POST':
+            $params = $_POST;
+            break;
     }
 
     switch( $request['action'] ){
@@ -212,12 +223,18 @@ function wpmc_handle_income_requests(){
             break;
         case 'access':
             $o = new Wpmc_Client_Access_Handler();
-            $o->access_endpoint( $params );
+            wp_send_json( $o->access_endpoint( $params ) );
             exit;
+        case 'login':
+            $o = new Wpmc_Client_Access_Handler();
+            return $o->login_endpoint( $params );
         case 'updates':
             $o = new Wpmc_Client_Access_Handler();
             wp_send_json( $o->available_updates_endpoint( $params ) );
             break;
+        case 'update_now':
+            $o = new Wpmc_Client_Access_Handler();
+            return $o->available_update_now_endpoint( $params );
     }
 }
 

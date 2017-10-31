@@ -80,6 +80,15 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 			'schema' => array( $this, 'get_public_item_schema' ),
 		));
 
+		register_rest_route( $this->rest_base, 'login', array(
+			array(
+				'methods'   => WP_REST_Server::EDITABLE,
+				'callback'  => array( $this, 'login' ),
+				'args'      => $this->get_endpoint_args_for_item_schema( WP_REST_Server::EDITABLE ),
+			),
+			'schema' => array( $this, 'get_public_item_schema' ),
+		));
+
 		register_rest_route( $this->rest_base, 'updates', array(
 			array(
 				'methods'   => WP_REST_Server::EDITABLE,
@@ -138,5 +147,10 @@ class Wpmc_REST_Controller extends WP_REST_Controller {
 		$o = new Wpmc_Client_Access_Handler();
 		$o->access_endpoint( $request->get_params() );
 		exit;
+	}
+
+	public function login($request){
+		$o = new Wpmc_Client_Access_Handler();
+		return $o->login_endpoint( $request->get_params() );
 	}
 }

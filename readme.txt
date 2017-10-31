@@ -3,7 +3,7 @@ Contributors: hosting.io, Jody Nesbitt
 Tags: wpcontroller,management,controller,
 Requires at least: 4.5
 Tested up to: 4.8.2
-Stable tag: 3.0.5
+Stable tag: 3.0.6
 
 
 Campaigns.io - Rediscover your business - fully integrated, useful info in one central dashboard. Suitable for single users or agencies that manage multiple clients
@@ -54,6 +54,11 @@ Yes, we use SSL layers on every aspect on our dashboard system, and the plugin c
 5.
 
 == Changelog ==
+= 3.0.6 =
+
+= 3.0.5 =
+* Minor bug fixes
+
 = 3.0.4 =
 * Fixed end points for updates and talk back to app
 
