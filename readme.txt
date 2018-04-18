@@ -2,18 +2,18 @@
 Contributors: hosting.io, Jody Nesbitt
 Tags: wpcontroller,management,controller,
 Requires at least: 4.5
-Tested up to: 4.8.2
-Stable tag: 3.0.6
+Tested up to: 4.9.1
+Stable tag: 3.0.7
 
 
 Campaigns.io - Rediscover your business - fully integrated, useful info in one central dashboard. Suitable for single users or agencies that manage multiple clients
 
 == License ==
-WpController Worker is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+Campaigns.io is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-WpController Worker is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+Campaigns.io  is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with WpController Worker. If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with Campaigns.io. If not, see <http://www.gnu.org/licenses/>.
 
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -36,7 +36,7 @@ install via the plugins system in WordPress or manually
 1. Upload `plugin-name.php` to the `/wp-content/plugins/` directory
 then:
 Activate the plugin through the 'Plugins' menu in WordPress
-Visit https://my.wpcontroller.co.uk and either signin or register for a free account, login and visit the dashboard and "add a new site" using the url and admin user for the respective domain
+Visit https://my.campaigns.io and either signin or register for a free account, login and visit the dashboard and "add a new site" using the url and admin user for the respective domain
 
 == Frequently asked questions ==
 
@@ -54,7 +54,12 @@ Yes, we use SSL layers on every aspect on our dashboard system, and the plugin c
 5.
 
 == Changelog ==
+= 3.0.7 =
+
+
+
 = 3.0.6 =
+* Minor bug fixes with auth not working on all sites
 
 = 3.0.5 =
 * Minor bug fixes

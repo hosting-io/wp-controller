@@ -1,9 +1,10 @@
-<?php
+<?php 
+
 class Wpmc_Client_Access_Handler {
 
 	protected $keys_length = 40;
 	protected $tokens_length = 40;
-	protected $refresh_token_expires = 900;	// 15 Minutes.
+	protected $refresh_token_expires = 900;	/* 15 Minutes. */
 	protected $authorization_code_expires = 30;
 
 	private $tokens = array(
@@ -200,26 +201,33 @@ class Wpmc_Client_Access_Handler {
 
 	public function access_endpoint( $args ){
 
-		if ( ! function_exists('wp_verify_nonce') ) { require_once (ABSPATH . WPINC . '/pluggable.php'); }
+		$sec_arg = isset( $args['sec_arg'] ) ? $args['sec_arg'] : null;
 
-		if( isset( $args['wpmc-nonce'] ) && wp_verify_nonce( $args['wpmc-nonce'], 'wpmc_access_nonce' ) ){
+		if( $sec_arg ){
 
-			$user = get_transient( 'wpmc_access_user' );
+			$access_user_data = get_transient( 'wpmc_access_user_data' );
 
-			if( $user ){
+			if( $access_user_data && isset( $access_user_data['user'] ) && isset( $access_user_data['security_arg'] ) ){
 
-				delete_transient( 'wpmc_access_user' );
+				delete_transient( 'wpmc_access_user_data' );
 
-				wp_set_current_user( $user->ID, $user->user_login );
-		        wp_set_auth_cookie( $user->ID );
-		        do_action( 'wp_login', $user->user_login, $user, false );
-		        
-				wp_safe_redirect( admin_url() );
-				exit;
+				if( $sec_arg === $access_user_data['security_arg'] ){
+
+					$user = $access_user_data['user'];
+						
+					wp_set_current_user( $user->ID, $user->user_login );
+			        wp_set_auth_cookie( $user->ID );
+			        do_action( 'wp_login', $user->user_login, $user, false );
+
+			        update_user_meta( $user->ID, 'last_login_time', current_time('mysql') );
+
+			        wp_safe_redirect( admin_url() );
+					exit;
+				}
 			}
 		}
 
-		wp_safe_redirect( site_url() );
+		wp_redirect( site_url() );
 		exit;
 	}
 
@@ -238,7 +246,7 @@ class Wpmc_Client_Access_Handler {
 
 		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
 
-		// Invalid request data.
+		/* Invalid request data. */
 		if( null === $action || null === $site_id || null === $request_url || null === $access_token ||  null === $username || ! in_array( $action, $valid_actions, true ) ){
 			
 			if( null !== $invalid_redirect ){
@@ -246,7 +254,7 @@ class Wpmc_Client_Access_Handler {
 				return $this->prepare_response( $response_args );
 			}
 			else{
-				// Redirect in home page.
+				/* Redirect in home page. */
 				$response_args = array( 'error' => false, 'redirect' => site_url() );
 				return $this->prepare_response( $response_args );
 			}
@@ -256,14 +264,14 @@ class Wpmc_Client_Access_Handler {
 
 		$user = get_user_by( 'login', $username );
 
-		// Invalid username.
+		/*  Invalid username. */
 		if( ! $user ){
 			if( null !== $invalid_redirect ){
 				$response_args = array( 'error' => 'invalid-user' );
 				return $this->prepare_response( $response_args );
 			}
 			else{
-				// Redirect in home page.
+				/* Redirect in home page. */
 				$response_args = array( 'error' => false, 'redirect' => site_url() );
 				return $this->prepare_response( $response_args );
 			}
@@ -271,14 +279,14 @@ class Wpmc_Client_Access_Handler {
 
 		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
 
-		// Invalid access token.
+		/* Invalid access token. */
 		if( $user_id_by_access_token !== $user->ID ){
 			if( null !== $invalid_redirect ){
 				$response_args = array( 'error' => 'invalid-access-token' );
 				return $this->prepare_response( $response_args );
 			}
 			else{
-				// Redirect in login page.
+				/* Redirect in login page.*/
 				$response_args = array( 'error' => false, 'redirect' => wp_login_url() );
 				return $this->prepare_response( $response_args );
 			}
@@ -286,10 +294,15 @@ class Wpmc_Client_Access_Handler {
 
 		switch( $action ){
 			case 'login':
-		        
-		        set_transient( 'wpmc_access_user', $user , 60 );	// Keep it fresh only for 60 seconds.
-
-		        $response_args = array( 'error' => false, 'redirect' => site_url( 'wp-json/' . WPMC_SLUG . '/access?wpmc-nonce=' . wp_create_nonce( 'wpmc_access_nonce' ) ) );
+				$security_arg = sha1( uniqid( mt_rand(), true ) );
+				set_transient( 'wpmc_access_user_data', 
+								array( 
+									'user' => $user,
+									'security_arg' => $security_arg 
+								),
+								30	/* Keep it fresh only for 30 seconds. */
+							);
+				$response_args = array( 'error' => false, 'redirect' => site_url( 'wp-json/' . WPMC_SLUG . '/access?sec_arg=' . $security_arg ) );
 				return $this->prepare_response( $response_args );
 				break;
 		}
@@ -317,7 +330,7 @@ class Wpmc_Client_Access_Handler {
 				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
 			}
 			else{
-				// Redirect in home page.
+				/* Redirect in home page. */
 				wp_safe_redirect( site_url() );
 				exit;
 			}
@@ -330,14 +343,14 @@ class Wpmc_Client_Access_Handler {
 			return $this->prepare_response( $this->set_invalid_request_error() );
 		}
 
-		// Return only number of available updates.
+		/* Return only number of available updates. */
 		$only_count = 'false' === $only_count ? false : true;
 
 		if ( ! function_exists('get_user_by') ) { require_once (ABSPATH . WPINC . '/pluggable.php'); }
 
 		$user = get_user_by( 'login', $username );
 
-		// Invalid username.
+		/* Invalid username. */
 		if( ! $user ){
 
 			if( null !== $invalid_redirect ){
@@ -345,7 +358,7 @@ class Wpmc_Client_Access_Handler {
 				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
 			}
 			else{
-				// Redirect in home page.
+				/* Redirect in home page. */
 				wp_safe_redirect(site_url());
 				exit;
 			}
@@ -353,14 +366,14 @@ class Wpmc_Client_Access_Handler {
 
 		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
 		
-		// Invalid access token.
+		/* Invalid access token. */
 		if( $user_id_by_access_token !== $user->ID ){
 			if( null !== $invalid_redirect ){
 				$error = 'invalid-access';
 				return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
 			}
 			else{
-				// Redirect in login page.
+				/* Redirect in login page. */
 				wp_safe_redirect(wp_login_url());
 				exit;
 			}
@@ -429,7 +442,7 @@ class Wpmc_Client_Access_Handler {
 
 		$user = get_user_by( 'login', $username );
 
-		// Invalid username.
+		/* Invalid username. */
 		if( ! $user ){
 			$error = 'invalid-user';
 			return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );
@@ -437,7 +450,7 @@ class Wpmc_Client_Access_Handler {
 
 		$user_id_by_access_token = $this->user_id_by_token_or_key( 'access_token', $access_token );
 		
-		// Invalid access token.
+		/* Invalid access token. */
 		if( $user_id_by_access_token !== $user->ID ){
 			$error = 'invalid-access';
 			return $this->invalid_access_response( $invalid_redirect, $error, $site_id, $request_url, $action );

@@ -1,4 +1,5 @@
-<?php
+<?php 
+
 class Wpmc_Authorize_Access_Handler extends Wpmc_Client_Access_Handler {
 
 	public function entry_endpoint($args){
