@@ -1,9 +1,9 @@
 === WP Controller ===
-Contributors: hosting.io, Jody Nesbitt
+Contributors: pigeonhut,hosting.io, Jody Nesbitt
 Tags: wpcontroller,management,controller,
 Requires at least: 4.5
 Tested up to: 4.9.1
-Stable tag: 3.0.7
+Stable tag: 3.1.0
 
 
 Campaigns.io - Rediscover your business - fully integrated, useful info in one central dashboard. Suitable for single users or agencies that manage multiple clients
@@ -54,7 +54,10 @@ Yes, we use SSL layers on every aspect on our dashboard system, and the plugin c
 5.
 
 == Changelog ==
-= 3.0.7 =
+= 3.1.0 =
+* Added Support for Stat reporting direct to dashboard
+* Added Support for WooCommerce Sales Data Collection direct to panel
+* Added Support for Heatmaps
 
 
 

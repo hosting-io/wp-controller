@@ -4,13 +4,13 @@
  *
  * @package 	WordPress_Multisite_Controller
  * @author    	hosting.io, campaigns.io
- * @copyright 	2017
+ * @copyright 	2015-2018
  * @license   	GPL2
  *
  * Plugin Name: 	Campaigns.io - WordPress Multisite Controller
  * Plugin URI:      https://controlwp.io
  * Description:     WordPress Multisite Controller - giving you more than just one click login. Discover everything you need to know about your business, from one easy to use dashboard
- * Version:         3.0.6
+ * Version:         3.1.0
  * Author:          hosting.io, campaigns.io
  * Author URI:      https://campaigns.io
  * Text Domain:     wp-management-controller
@@ -27,6 +27,7 @@ require_once WPMC_INCLUDES_PATH . '/class-wpmc-transients.php';
 require_once WPMC_INCLUDES_PATH . '/class-wpmc-rsa-handler.php';
 require_once WPMC_INCLUDES_PATH . '/class-wpmc-client-access-handler.php';
 require_once WPMC_INCLUDES_PATH . '/functions.php';
+require_once WPMC_INCLUDES_PATH. '/class-piwik-analytics.php';
 
 /**
  * The core plugin class that is used to define internationalization,
@@ -63,3 +64,11 @@ function run_wp_management_controller() {
 	$plugin->run();
 }
 run_wp_management_controller();
+
+function run_piwik_action()
+{
+	$piwik = new Wpmc_PiwikAnalytics();
+
+}
+
+run_piwik_action();
