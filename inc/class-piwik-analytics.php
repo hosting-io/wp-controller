@@ -80,7 +80,7 @@ class Wpmc_PiwikAnalytics
 
 			<script type="text/javascript">
 				var _paq = _paq || [];
-                _paq.push(["setDomains", ["*.www.<?php echo $domain_name; ?>"]]);
+                _paq.push(["setDomains", ["*.<?php echo $domain_name; ?>"]]);
 				_paq.push(["trackPageView"]);
 				_paq.push(["enableLinkTracking"]);
 				(function () {
