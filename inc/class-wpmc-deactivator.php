@@ -13,7 +13,7 @@ class Wpmc_Deactivator {
 	 * [[Description]]
 	 */
 	public static function deactivate() {
-		wpmc_delete_all_options();
+		// wpmc_delete_all_options();
 		Wpmc_Transients::clean_all();
 	}
 }
