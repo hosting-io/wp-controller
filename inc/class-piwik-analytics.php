@@ -74,7 +74,7 @@ class Wpmc_PiwikAnalytics
 			?><?php
 			if(!is_admin()) {
 			$options  = get_option('wpmc_piwik_setting');
-            $options['piwik_hostname'] = ($options['piwik_hostname'])?$options['piwik_hostname']:'stats.campaigns.io';
+            $options['piwik_hostname'] = ($options['piwik_hostname'])?$options['piwik_hostname']:'my.campaigns.io/stats';
             $domain_name = $_SERVER['HTTP_HOST'];
 			?>
 

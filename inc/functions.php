@@ -148,7 +148,7 @@ function wpmc_delete_all_options(){
 }
 
 function wpmc_on_uninstall(){
-    wpmc_delete_all_options();    
+    // wpmc_delete_all_options();    
     delete_option('wp_management_controller_version');
     Wpmc_Transients::clean_all();
 }
