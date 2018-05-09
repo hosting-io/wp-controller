@@ -10,8 +10,8 @@
 <table>
     <tr>
         <td><label for="">Analytics path:</label></td>
-        <td><input name="piwik_hostname" type="text" id="piwik_hostname" value="<?php echo ($settings['piwik_hostname'])?$settings['piwik_hostname']:'my.campaigns.io/stats'; ?>" readonly="true"/>
-            <p class="description">my.campaigns.io/stats</p>
+        <td><input name="piwik_hostname" type="text" id="piwik_hostname" value="http://my.campaigns.io" readonly="true"/>
+            <p class="description">http://my.campaigns.io/stats</p>
         </td>
     </tr>
     <tr>

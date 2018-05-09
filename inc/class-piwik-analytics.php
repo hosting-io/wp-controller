@@ -74,7 +74,7 @@ class Wpmc_PiwikAnalytics
 			?><?php
 			if(!is_admin()) {
 			$options  = get_option('wpmc_piwik_setting');
-            $options['piwik_hostname'] = ($options['piwik_hostname'])?$options['piwik_hostname']:'my.campaigns.io/stats';
+            $options['piwik_hostname'] = 'my.campaigns.io/stats';
             $domain_name = $_SERVER['HTTP_HOST'];
 			?>
 
@@ -95,13 +95,6 @@ class Wpmc_PiwikAnalytics
 					s.parentNode.insertBefore(g, s);
 				})();
 			</script>
-			<noscript>
-				<p>
-					<img
-						src="http://<?php echo esc_js( $options['piwik_hostname'] ); ?>/piwik.php?idsite=<?php echo esc_js($options['piwik_siteid'] ); ?>"
-						style="border:0;" alt=""/>
-				</p>
-			</noscript>
 		<?php
 					}
 			}
